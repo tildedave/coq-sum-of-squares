@@ -140,6 +140,14 @@ Proof.
   apply Z_mult_div_ge; omega.
 Qed.
 
+Lemma descent_nonzero: forall a b m,
+    descent_modulus a m * descent_modulus a m + descent_modulus b m * descent_modulus b m > 0.
+Admitted.
+
+Lemma div_swap_lt_l: forall a b c, a <> 0 -> (a | c) -> a * b < c <-> b < c / a.
+Proof.
+Admitted.
+
 (* Prove that the descent step either terminates or produces a smaller integer *)
 Theorem descent_smaller: forall a b q N m,
   q > 0 -> N > 0 ->
@@ -147,7 +155,7 @@ Theorem descent_smaller: forall a b q N m,
   (q | N) ->
   m = N / q ->
   forall k t1 t2,  (k, t1, t2) = descent a b q ->
-  k = 1 \/ (k < m).
+  k = 1 \/ (0 < k < m).
 Proof.
   intros a b q N m q_gt_0 N_gt_0 def_N q_div_N def_m k u v.
   assert (m > 0) as m_gt_0.
@@ -157,9 +165,12 @@ Proof.
   destruct (Z.eq_dec m 1); intros descent_def; inversion descent_def.
   - left; reflexivity.
   - right.
+    split.
+    rewrite <- div_swap_lt_l; [ | omega | ]; auto.
+    remember (descent_nonzero a b m); omega.
+    Focus 2.
     rewrite <- (Z.abs_square (descent_modulus a m)).
     rewrite <- (Z.abs_square (descent_modulus b m)).
-    Search (_ < _ -> _ > _).
     apply Z.div_lt_upper_bound; [apply Z.gt_lt; apply m_gt_0; auto | auto].
     remember (descent_modulus_le_m_div_2 a m m_gt_0).
     remember (descent_modulus_le_m_div_2 b m m_gt_0).
@@ -175,7 +186,8 @@ Proof.
             Z.abs (descent_modulus b m) <= (m / 2) * (m / 2) + (m / 2) * (m / 2)) by omega.
     apply (Z.le_lt_trans _ _ _ H4).
     apply descent_inequality; auto.
-Qed.
+Admitted.
+(*Qed.*)
 
 Lemma diophantine_identity:
   forall a b c d, (a * a + b * b) * (c * c + d * d) = (a * c + b * d) * (a * c + b * d) + (b * c - a * d) * (b * c - a * d).
@@ -393,4 +405,67 @@ Proof.
     rewrite (Z.mul_comm x m) in m_div_u_v.
     apply div_swap_l in m_div_u_v; [ | omega | rewrite Hequ, Heqv; apply (descent_div_sum a b q N m)]; auto.
     rewrite m_div_u_v; reflexivity.
+Qed.
+
+Compute (descent 557 55 12049).
+Compute (descent 242 41 12049).
+
+Check nat.
+
+Require Coq.Init.Nat.
+Check Nat.zero.
+
+Fixpoint sum_of_squares_helper a b p (n: nat) :=
+  match n with
+  | S m => match descent a b p with
+             (k, u, v) => if Z.eq_dec k 1 then
+                            (u, v)
+                          else
+                            sum_of_squares_helper u v p m
+           end
+  | zero => (0, 0)
+  end.
+
+Import N2Z.
+
+Definition sum_of_squares a b p :=
+  match sum_of_squares_helper a b p (Z.to_nat (a * a + b * b + 1)) with
+    (u, v) => (Z.abs u, Z.abs v)
+  end.
+
+Check Nat.lt.
+
+(* need some bound on n that's related to the arguments *)
+Lemma sum_of_squares_helper_works: forall n a b p u v,
+    p > 0 ->
+    a * a + b * b > 0 ->
+    (p | a*a + b*b) ->
+    Nat.lt (Z.to_nat (a * a + b * b)) n ->
+    (u, v) = sum_of_squares_helper a b p n ->
+    u * u + v * v = p.
+Proof.
+  induction n; intros a b p u v p_gt_0 args_gt_0 p_div_a_square_plus_b_square n_bound;
+     unfold sum_of_squares_helper; intros def_u_v.
+  contradict n_bound; unfold Nat.lt; omega.
+  fold sum_of_squares_helper in def_u_v.
+  remember (descent a b p) as c'.
+  destruct c' as [[k u'] v'].
+  assert ((k, u', v') = descent a b p) as Heqd' by assumption.
+  apply (descent_mult a b p (a * a + b * b)) in Heqc'; auto.
+  apply (descent_smaller a b p (a * a + b * b) ((a * a + b * b) / p)) in Heqd'; auto.
+  destruct (Z.eq_dec k 1); inversion def_u_v.
+  - rewrite <- Heqc', e, Z.mul_1_l; reflexivity.
+  - assert (u' * u' + v' * v' > 0) as result_gt_0.
+    destruct Heqd' as [k_eq_1 | k_bounded];
+      [|rewrite <- Heqc'; rewrite Z.gt_lt_iff; apply Z.mul_pos_pos]; omega.
+    assert (u' * u' + v' * v' < a * a + b * b) as recursion_bounded.
+    destruct Heqd'; [contradict H |]; auto.
+    rewrite <- Heqc'.
+    rewrite <- div_swap_lt_l in H; auto.
+    rewrite Z.mul_comm; destruct H; assumption.
+    omega.
+    apply IHn in def_u_v; [ | | | exists k; symmetry; assumption | ]; auto.
+    rewrite Z2Nat.inj_lt in recursion_bounded; [| omega | omega].
+    apply lt_n_Sm_le in n_bound.
+    apply (lt_le_trans _ (Z.to_nat (a * a + b * b)) _); [assumption | omega].
 Qed.
