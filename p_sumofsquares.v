@@ -536,9 +536,7 @@ Fixpoint prime_sum_of_squares_helper a b p (n: nat) :=
 Import N2Z.
 
 Definition prime_sum_of_squares a b p :=
-  match prime_sum_of_squares_helper a b p (Z.to_nat (a * a + b * b + 1)) with
-    (u, v) => (Z.abs u, Z.abs v)
-  end.
+  prime_sum_of_squares_helper a b p (Z.to_nat (a * a + b * b + 1)).
 
 Lemma prime_sum_of_squares_helper_works: forall n a b p u v,
     prime p ->
@@ -575,4 +573,20 @@ Proof.
     apply lt_n_Sm_le in n_bound.
     apply (lt_le_trans _ (Z.to_nat (a * a + b * b)) _); [assumption | omega].
   - rewrite <- div_swap_lt_r; auto.
+Qed.
+
+Theorem prime_sum_of_squares_works: forall a b p u v,
+    prime p ->
+    p > 0 ->
+    a * a + b * b > 0 ->
+    a * a + b * b < p * p ->
+    (p | a*a + b*b) ->
+    (u, v) = prime_sum_of_squares a b p ->
+    u * u + v * v = p.
+Proof.
+  intros a b p u v p_prime p_gt_0 args_gt_0 args_lt_p_sq p_div_a_square_plus_b_square.
+  unfold prime_sum_of_squares.
+  intros def_u_v.
+  apply (prime_sum_of_squares_helper_works (Z.to_nat (a * a + b * b + 1)) a b); auto.
+  apply Z2Nat.inj_lt; omega.
 Qed.
