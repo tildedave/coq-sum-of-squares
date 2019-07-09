@@ -1,6 +1,8 @@
 Require Import Znumtheory Zdiv ZArith.
 Local Open Scope Z_scope.
 
+Import N2Z.
+
 (* Lemmas I needed over what the Coq library supplies *)
 
 Lemma div_swap_l: forall a b c, a <> 0 -> (a | b) -> b = a * c <-> b / a = c.
@@ -15,9 +17,7 @@ Proof.
     rewrite Z.mul_cancel_l in def_b; auto.
   - intros def_b.
     rewrite <- def_b.
-    Search (_ * (_ / _)).
     rewrite <- Z.divide_div_mul_exact; auto.
-    Search (_ * _ / _).
     rewrite Z.mul_comm.
     symmetry.
     apply Z_div_mult_full; auto.
@@ -26,7 +26,6 @@ Qed.
 Lemma div_positive: forall a b, a > 0 -> b > 0 -> (a | b) -> b / a > 0.
 Proof.
   intros a b a_gt_0 b_gt_0.
-  Search (_ | _).
   intros a_div_b.
   destruct a_div_b as [x def_of_x].
   cut (x > 0). intro Cut.
@@ -144,7 +143,6 @@ Proof.
   destruct (Z_le_dec (2 * (a mod m)) m).
   - intros eq_0; apply Zmod_divide; omega.
   - intros eq_0. apply Zmod_divide; [omega | ].
-    Search (_ - _ = _).
     rewrite Z.sub_move_r in eq_0.
     simpl in eq_0.
     remember (Z_mod_lt a m).
@@ -229,18 +227,15 @@ Proof.
   (* we know m * m divides N *)
   (* so m divides q *)
   rewrite <- def_N.
-  Search (prime _).
   symmetry in def_m.
   rewrite <- (div_swap_l q N) in def_m; [|omega|]; auto.
   rewrite def_m.
-  Search (_ * _ | _ * _).
   rewrite Z.mul_divide_cancel_r; [|omega]; auto.
   unfold not.
   intros eq_0.
   apply zero_means_m_divides_a_and_b in eq_0.
   apply divide_one_divide_all in eq_0.
   apply divide_all_implies_divide_prime in eq_0.
-  Search (prime _).
   apply (prime_divisors q q_prime m) in eq_0.
   omega.
 Qed.
@@ -402,7 +397,6 @@ Proof.
   repeat rewrite <- Zminus_mod.
   rewrite Z.mul_comm.
   rewrite Z.sub_diag.
-  Search (_ mod _ = 0).
   rewrite Zmod_0_l; reflexivity.
 Qed.
 
@@ -517,11 +511,6 @@ Qed.
 Compute (descent 557 55 12049).
 Compute (descent 242 41 12049).
 
-Check nat.
-
-Require Coq.Init.Nat.
-Check Nat.zero.
-
 Fixpoint prime_sum_of_squares_helper a b p (n: nat) :=
   match n with
   | S m => match descent a b p with
@@ -532,8 +521,6 @@ Fixpoint prime_sum_of_squares_helper a b p (n: nat) :=
            end
   | zero => (0, 0)
   end.
-
-Import N2Z.
 
 Definition prime_sum_of_squares a b p :=
   prime_sum_of_squares_helper a b p (Z.to_nat (a * a + b * b + 1)).
