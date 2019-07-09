@@ -39,3 +39,22 @@ Therefore 1 * 4349 = 43^2 + 50^2 and we are finished with the descent.
 
 * `descent` - single step in the descent.
 * `prime_sum_of_squares` - compute for a prime its sum of squares representation
+
+The final type of the term showing correctness of the procedure is:
+
+```
+Theorem prime_sum_of_squares_works: forall a b p u v,
+    prime p ->
+    p > 0 ->
+    a * a + b * b > 0 ->
+    a * a + b * b < p * p ->
+    (p | a*a + b*b) ->
+    (u, v) = prime_sum_of_squares a b p ->
+    u * u + v * v = p.
+```
+
+Thus given appropriate arguments `a`, `b` such that `p | (a * a + b * b = p)`, it outputs numbers `(u, v)` such that `p = u * u + v * v`.  `p` must be prime and the initial arguments must not exceed `p * p`.
+
+## References
+
+* A Friendly Introduction to Number Theory, Silverman 4th Edition (Chapter 26)
