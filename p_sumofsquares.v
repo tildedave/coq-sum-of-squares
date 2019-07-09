@@ -141,12 +141,41 @@ Proof.
 Qed.
 
 Lemma descent_nonzero: forall a b m,
+    m > 1 ->
     descent_modulus a m * descent_modulus a m + descent_modulus b m * descent_modulus b m > 0.
+Proof.
+  intros a b m m_gt_1.
 Admitted.
 
-Lemma div_swap_lt_l: forall a b c, a <> 0 -> (a | c) -> a * b < c <-> b < c / a.
+Lemma div_swap_l: forall a b c, a <> 0 -> (a | b) -> b = a * c <-> b / a = c.
 Proof.
-Admitted.
+  intros a b c a_neq_0 a_div_b.
+  split.
+  - destruct a_div_b as [x def_a].
+    intros def_b.
+    rewrite def_a.
+    rewrite Z_div_mult_full; auto.
+    rewrite def_a, Z.mul_comm in def_b.
+    rewrite Z.mul_cancel_l in def_b; auto.
+  - intros def_b.
+    rewrite <- def_b.
+    Search (_ * (_ / _)).
+    rewrite <- Z.divide_div_mul_exact; auto.
+    Search (_ * _ / _).
+    rewrite Z.mul_comm.
+    symmetry.
+    apply Z_div_mult_full; auto.
+Qed.
+
+Lemma div_swap_lt_l: forall a b c, a > 0 -> (a | c) -> a * b < c <-> b < c / a.
+Proof.
+  intros a b c a_gt_0 a_div_c.
+  destruct a_div_c as [x def_c].
+  rewrite def_c.
+  rewrite (Z.mul_comm a b).
+  rewrite Z_div_mult_full; [|omega]; auto.
+  rewrite <- Z.mul_lt_mono_pos_r; omega.
+Qed.
 
 (* Prove that the descent step either terminates or produces a smaller integer *)
 Theorem descent_smaller: forall a b q N m,
@@ -168,7 +197,16 @@ Proof.
     split.
     rewrite <- div_swap_lt_l; [ | omega | ]; auto.
     remember (descent_nonzero a b m); omega.
-    Focus 2.
+    rewrite <- Z.mod_divide; [|omega].
+    rewrite Zplus_mod.
+    rewrite (Zmult_mod (descent_modulus a m)).
+    rewrite (Zmult_mod (descent_modulus b m)).
+    repeat rewrite descent_modulus_equiv_a_mod_m; auto.
+    repeat rewrite <- Zmult_mod.
+    repeat rewrite <- Zplus_mod.
+    rewrite <- def_N, Z.mod_divide; [|omega].
+    exists q.
+    rewrite div_swap_l; [auto | omega |assumption].
     rewrite <- (Z.abs_square (descent_modulus a m)).
     rewrite <- (Z.abs_square (descent_modulus b m)).
     apply Z.div_lt_upper_bound; [apply Z.gt_lt; apply m_gt_0; auto | auto].
@@ -186,33 +224,12 @@ Proof.
             Z.abs (descent_modulus b m) <= (m / 2) * (m / 2) + (m / 2) * (m / 2)) by omega.
     apply (Z.le_lt_trans _ _ _ H4).
     apply descent_inequality; auto.
-Admitted.
-(*Qed.*)
+Qed.
 
 Lemma diophantine_identity:
   forall a b c d, (a * a + b * b) * (c * c + d * d) = (a * c + b * d) * (a * c + b * d) + (b * c - a * d) * (b * c - a * d).
 Proof.
   intros; ring.
-Qed.
-
-Lemma div_swap_l: forall a b c, a <> 0 -> (a | b) -> b = a * c <-> b / a = c.
-Proof.
-  intros a b c a_neq_0 a_div_b.
-  split.
-  - destruct a_div_b as [x def_a].
-    intros def_b.
-    rewrite def_a.
-    rewrite Z_div_mult_full; auto.
-    rewrite def_a, Z.mul_comm in def_b.
-    rewrite Z.mul_cancel_l in def_b; auto.
-  - intros def_b.
-    rewrite <- def_b.
-    Search (_ * (_ / _)).
-    rewrite <- Z.divide_div_mul_exact; auto.
-    Search (_ * _ / _).
-    rewrite Z.mul_comm.
-    symmetry.
-    apply Z_div_mult_full; auto.
 Qed.
 
 Lemma descent_div_sum: forall a b q N m,
@@ -463,7 +480,6 @@ Proof.
     rewrite <- Heqc'.
     rewrite <- div_swap_lt_l in H; auto.
     rewrite Z.mul_comm; destruct H; assumption.
-    omega.
     apply IHn in def_u_v; [ | | | exists k; symmetry; assumption | ]; auto.
     rewrite Z2Nat.inj_lt in recursion_bounded; [| omega | omega].
     apply lt_n_Sm_le in n_bound.
