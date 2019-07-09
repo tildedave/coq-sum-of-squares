@@ -35,6 +35,13 @@ Compute descent 93 (-7) 4349.
 
 Therefore 1 * 4349 = 43^2 + 50^2 and we are finished with the descent.
 
+We can also compute it directly, without us needing to do the descent step one at a time:
+
+```
+Compute prime_sum_of_squares 608 1 4349.
+    = (43, -50)
+```
+
 ## Functions In This Repo
 
 * `descent` - single step in the descent.
