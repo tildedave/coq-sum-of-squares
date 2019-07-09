@@ -4,7 +4,7 @@ This repository contains code in Coq that computes the representation of a prime
 
 The method used is Fermat's descent method which, given a, b such that (a^2 + b^2 | p), outputs a smaller c and d such that (c^2 + d^2 | p).
 
-Because this relies on an initial solution, this can only be done for primes such that x^2 = - y^2 mod p is solvable, which reduces to -1 being a quadratic residue.  This is only true for primes p such that p mod 4 = 1.
+Because this relies on an initial solution, this can only be done for primes such that x^2 = - y^2 mod p is solvable, which reduces to -1 being a quadratic residue (i.e. there is some x such that x^2 = -1 mod p).  Number theory tells us that -1 is only a quadratic residue to for primes p such that p mod 4 = 1.
 
 ## Examples
 
