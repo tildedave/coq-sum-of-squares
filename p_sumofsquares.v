@@ -432,39 +432,38 @@ Check nat.
 Require Coq.Init.Nat.
 Check Nat.zero.
 
-Fixpoint sum_of_squares_helper a b p (n: nat) :=
+Fixpoint prime_sum_of_squares_helper a b p (n: nat) :=
   match n with
   | S m => match descent a b p with
              (k, u, v) => if Z.eq_dec k 1 then
                             (u, v)
                           else
-                            sum_of_squares_helper u v p m
+                            prime_sum_of_squares_helper u v p m
            end
   | zero => (0, 0)
   end.
 
 Import N2Z.
 
-Definition sum_of_squares a b p :=
-  match sum_of_squares_helper a b p (Z.to_nat (a * a + b * b + 1)) with
+Definition prime_sum_of_squares a b p :=
+  match prime_sum_of_squares_helper a b p (Z.to_nat (a * a + b * b + 1)) with
     (u, v) => (Z.abs u, Z.abs v)
   end.
 
-Check Nat.lt.
-
 (* need some bound on n that's related to the arguments *)
-Lemma sum_of_squares_helper_works: forall n a b p u v,
+Lemma prime_sum_of_squares_helper_works: forall n a b p u v,
+    prime p ->
     p > 0 ->
     a * a + b * b > 0 ->
     (p | a*a + b*b) ->
     Nat.lt (Z.to_nat (a * a + b * b)) n ->
-    (u, v) = sum_of_squares_helper a b p n ->
+    (u, v) = prime_sum_of_squares_helper a b p n ->
     u * u + v * v = p.
 Proof.
-  induction n; intros a b p u v p_gt_0 args_gt_0 p_div_a_square_plus_b_square n_bound;
-     unfold sum_of_squares_helper; intros def_u_v.
+  induction n; intros a b p u v p_prime p_gt_0 args_gt_0 p_div_a_square_plus_b_square n_bound;
+     unfold prime_sum_of_squares_helper; intros def_u_v.
   contradict n_bound; unfold Nat.lt; omega.
-  fold sum_of_squares_helper in def_u_v.
+  fold prime_sum_of_squares_helper in def_u_v.
   remember (descent a b p) as c'.
   destruct c' as [[k u'] v'].
   assert ((k, u', v') = descent a b p) as Heqd' by assumption.
@@ -480,7 +479,7 @@ Proof.
     rewrite <- Heqc'.
     rewrite <- div_swap_lt_l in H; auto.
     rewrite Z.mul_comm; destruct H; assumption.
-    apply IHn in def_u_v; [ | | | exists k; symmetry; assumption | ]; auto.
+    apply IHn in def_u_v; [ | | | | exists k; symmetry; assumption | ]; auto.
     rewrite Z2Nat.inj_lt in recursion_bounded; [| omega | omega].
     apply lt_n_Sm_le in n_bound.
     apply (lt_le_trans _ (Z.to_nat (a * a + b * b)) _); [assumption | omega].
