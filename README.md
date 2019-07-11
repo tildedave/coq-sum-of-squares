@@ -39,7 +39,7 @@ We can also compute it directly, without us needing to do the descent step one a
 
 ```
 Compute prime_sum_of_squares 608 1 4349.
-    = (43, -50)
+    = (43, 50)
 ```
 
 ## Functions In This Repo
